@@ -1,0 +1,8 @@
+# Virtual environement from python / UV / pip
+.venv
+
+# VScode
+.code
+
+# JetBrains
+.idea
