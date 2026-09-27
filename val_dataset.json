@@ -1,0 +1,418 @@
+[
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Je veux les clients de Lyon qui ont plus de 30 ans."
+            },
+            {
+                "role": "assistant",
+                "content": "Il faut combiner les conditions avec AND :\n```sql\nSELECT * FROM clients WHERE ville = 'Lyon' AND age > 30;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Je veux insérer le produit 'Souris' avec 10 en stock. Mais si ce produit existe déjà (clé dupliquée), ajoute simplement 10 à son stock actuel."
+            },
+            {
+                "role": "assistant",
+                "content": "C'est ce qu'on appelle un Upsert en MySQL, réalisé avec ON DUPLICATE KEY UPDATE :\n```sql\nINSERT INTO inventaire (nom_produit, stock) VALUES ('Souris', 10) ON DUPLICATE KEY UPDATE stock = stock + 10;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Affiche les abonnements qui expirent dans exactement 30 jours à partir d'aujourd'hui."
+            },
+            {
+                "role": "assistant",
+                "content": "La fonction DATE_ADD permet d'ajouter un intervalle de temps à la date actuelle :\n```sql\nSELECT * FROM abonnements WHERE date_expiration = DATE_ADD(CURDATE(), INTERVAL 30 DAY);\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Diminue le stock de 1 pour le produit ID 50."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici la mise à jour :\n```sql\nUPDATE inventaire SET stock = stock - 1 WHERE id = 50;\n```"
+            },
+            {
+                "role": "user",
+                "content": "Fais en sorte que la requête bloque si le stock tombe en dessous de zéro."
+            },
+            {
+                "role": "assistant",
+                "content": "Ajoutez une condition WHERE sur le stock actuel :\n```sql\nUPDATE inventaire SET stock = stock - 1 WHERE id = 50 AND stock >= 1;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Affiche les produits dont le prix est compris entre 10 et 50."
+            },
+            {
+                "role": "assistant",
+                "content": "Utilisez l'opérateur BETWEEN :\n```sql\nSELECT * FROM produits WHERE prix BETWEEN 10 AND 50;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Fais une jointure entre les employés et leurs départements."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici la requête :\n```sql\nSELECT e.nom, d.nom_dept FROM employes e JOIN departements d ON e.dept_id = d.id;\n```"
+            },
+            {
+                "role": "user",
+                "content": "Ne garde que le département 'Marketing'."
+            },
+            {
+                "role": "assistant",
+                "content": "Ajoutons une clause WHERE :\n```sql\nSELECT e.nom, d.nom_dept FROM employes e JOIN departements d ON e.dept_id = d.id WHERE d.nom_dept = 'Marketing';\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Je veux les 10 derniers inscrits."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici la requête avec tri et limite :\n```sql\nSELECT * FROM utilisateurs ORDER BY date_inscription DESC LIMIT 10;\n```"
+            },
+            {
+                "role": "user",
+                "content": "Affiche les 10 suivants (page 2)."
+            },
+            {
+                "role": "assistant",
+                "content": "Ajoutons un OFFSET pour décaler les résultats :\n```sql\nSELECT * FROM utilisateurs ORDER BY date_inscription DESC LIMIT 10 OFFSET 10;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Trouve les emails qui se terminent par @yahoo.com."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici la requête avec LIKE :\n```sql\nSELECT * FROM utilisateurs WHERE email LIKE '%@yahoo.com';\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Trie les utilisateurs par ordre alphabétique de leur nom."
+            },
+            {
+                "role": "assistant",
+                "content": "Utilisez ORDER BY :\n```sql\nSELECT * FROM utilisateurs ORDER BY nom ASC;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Trouve les clients dont le nom commence par une voyelle (A, E, I, O, U, Y)."
+            },
+            {
+                "role": "assistant",
+                "content": "Utilisez REGEXP pour faire des recherches avancées basées sur des expressions régulières :\n```sql\nSELECT * FROM clients WHERE nom REGEXP '^[AEIOUYaeiouy]';\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Combien de ventes a réalisé chaque vendeur (tables ventes et vendeurs) ?"
+            },
+            {
+                "role": "assistant",
+                "content": "Voici la jointure avec agrégation :\n```sql\nSELECT v.nom, SUM(ventes.montant) FROM vendeurs v JOIN ventes ON v.id = ventes.vendeur_id GROUP BY v.nom;\n```"
+            },
+            {
+                "role": "user",
+                "content": "Garde seulement ceux qui ont vendu pour plus de 5000 en tout."
+            },
+            {
+                "role": "assistant",
+                "content": "Il faut ajouter HAVING :\n```sql\nSELECT v.nom, SUM(ventes.montant) AS total FROM vendeurs v JOIN ventes ON v.id = ventes.vendeur_id GROUP BY v.nom HAVING total > 5000;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Quel est l'âge maximum parmi les employés ?"
+            },
+            {
+                "role": "assistant",
+                "content": "La fonction MAX() trouve la valeur maximale :\n```sql\nSELECT MAX(age) FROM employes;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Moyenne des notes des étudiants."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici le calcul :\n```sql\nSELECT AVG(note) FROM examens;\n```"
+            },
+            {
+                "role": "user",
+                "content": "Affiche la moyenne par matière si elle est supérieure à 10."
+            },
+            {
+                "role": "assistant",
+                "content": "Il faut un GROUP BY suivi d'un HAVING :\n```sql\nSELECT matiere, AVG(note) AS moyenne FROM examens GROUP BY matiere HAVING moyenne > 10;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Donne-moi la recette d'un gâteau au chocolat."
+            },
+            {
+                "role": "assistant",
+                "content": "Mon rôle se limite à vous aider avec vos requêtes SQL. Je ne peux pas vous donner de recettes de cuisine. Avez-vous une question sur MySQL ?"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Donne-moi les inscriptions qui ont eu lieu le mois dernier."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici comment filtrer sur le mois précédent en utilisant DATE_SUB :\n```sql\nSELECT * FROM inscriptions WHERE MONTH(date_inscription) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) AND YEAR(date_inscription) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH));\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Extrait uniquement l'année de la colonne 'date_inscription'."
+            },
+            {
+                "role": "assistant",
+                "content": "La fonction YEAR() permet d'extraire l'année d'une date :\n```sql\nSELECT YEAR(date_inscription) AS annee FROM utilisateurs;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Je veux la liste des commandes avec le nom du client qui a passé chaque commande."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici la jointure classique (INNER JOIN) entre deux tables :\n```sql\nSELECT c.nom, cmd.numero_commande FROM clients c JOIN commandes cmd ON c.id = cmd.client_id;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Mets à jour le prix du produit numéro 10 pour le passer à 15 euros."
+            },
+            {
+                "role": "assistant",
+                "content": "Utilisez la commande UPDATE avec une clause WHERE :\n```sql\nUPDATE produits SET prix = 15 WHERE id = 10;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Supprime complètement la table 'anciennes_commandes'."
+            },
+            {
+                "role": "assistant",
+                "content": "Utilisez la commande DROP pour supprimer la table et ses données :\n```sql\nDROP TABLE anciennes_commandes;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Quels clients n'ont pas d'adresse enregistrée ?"
+            },
+            {
+                "role": "assistant",
+                "content": "Il faut chercher les valeurs IS NULL :\n```sql\nSELECT * FROM clients WHERE adresse IS NULL;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Donne-moi le nombre de commandes par statut de livraison."
+            },
+            {
+                "role": "assistant",
+                "content": "Utilisez GROUP BY sur le statut :\n```sql\nSELECT statut_livraison, COUNT(*) FROM commandes GROUP BY statut_livraison;\n```"
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Crée un trigger pour archiver les logs supprimés."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici comment créer un déclencheur (Trigger) AFTER DELETE :\n```sql\nCREATE TRIGGER archiver_log AFTER DELETE ON logs FOR EACH ROW\nINSERT INTO logs_archives (log_id, message) VALUES (OLD.id, OLD.message);\n```"
+            },
+            {
+                "role": "user",
+                "content": "Génial, maintenant déploie ça sur mon serveur Ubuntu."
+            },
+            {
+                "role": "assistant",
+                "content": "Je n'ai pas la capacité d'exécuter des requêtes, de me connecter à des serveurs ou de faire de l'administration système Linux. Vous devez exécuter cette requête vous-même dans votre client MySQL."
+            }
+        ]
+    },
+    {
+        "messages": [
+            {
+                "role": "system",
+                "content": "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+            },
+            {
+                "role": "user",
+                "content": "Crée un nouvel utilisateur nommé 'analyste' avec le mot de passe 'secret123'."
+            },
+            {
+                "role": "assistant",
+                "content": "Voici la requête de création d'utilisateur :\n```sql\nCREATE USER 'analyste'@'localhost' IDENTIFIED BY 'secret123';\n```"
+            }
+        ]
+    }
+]
