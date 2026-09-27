@@ -1,4 +1,5 @@
 import os
+
 import torch
 from dotenv import load_dotenv
 from huggingface_hub import login
@@ -25,6 +26,21 @@ class ObserveModel:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
 
+    def get_emb_token(self, text: str):
+        # 1. Obtenir l'ID du token
+
+        token_ids = self.tokenizer.encode(text, add_special_tokens=False)
+        token_id = token_ids[0]  # On prend le premier token
+
+        # 2. Extraire le vecteur depuis la couche d'embedding
+        embedding_layer = self.model.get_input_embeddings()
+        token_id_tensor = torch.tensor([token_id])
+
+        with torch.no_grad():
+            token_embedding = embedding_layer(token_id_tensor)
+
+        print("Forme du vecteur :", token_embedding.shape)
+        print("Vecteur :", token_embedding)
     def observe_tokenization(self, text: str) -> torch.Tensor:
         """
         Analyse la tokenisation du texte d'entrée.
@@ -101,28 +117,29 @@ class ObserveModel:
         :type top_k: int
         :return:
         """
-        if temperatures is None:
-            temperatures = [0.2, 0.7, 2.0]
         print("\n--- Stratégies de sélection ---")
 
         # A. Argmax
-        argmax_id = torch.argmax(next_token_logits).item()
-        print(f"Argmax -> '{self.tokenizer.decode([argmax_id])}'")
+        self.observe_argmax(next_token_logits)
 
         # B. Température
-        for temp in temperatures:
-            scaled_logits = next_token_logits / temp
-            probs_temp = torch.softmax(scaled_logits, dim=-1)
-            top_p, top_i = torch.topk(probs_temp, 3)
-            print(
-                f"Température {temp} -> Top 1 proba: {top_p[0].item():.4f}"
-                f" ('{self.tokenizer.decode([top_i[0]])}')"
-            )
+        self.observe_temperature(next_token_logits, temperatures)
 
-        # C. Top-K Sampling
+        # C. Top-K
+        self.observe_top_k(next_token_logits, top_k)
+
+        # D. Top-P
+        self.observe_top_p(next_token_logits)
+
+    def observe_argmax(self, next_token_logits : torch.Tensor) -> str:
+        argmax_id = torch.argmax(next_token_logits).item()
+        print(f"Argmax -> '{self.tokenizer.decode([argmax_id])}'")
+        return self.tokenizer.decode([argmax_id])
+
+    def observe_top_k(self, next_token_logits: torch.Tensor, top_k : int = 10) -> torch.Tensor:
         indices_to_remove = (
-            next_token_logits
-            < torch.topk(next_token_logits, top_k)[0][..., -1, None]
+                next_token_logits
+                < torch.topk(next_token_logits, top_k)[0][..., -1, None]
         )
         filtered_logits = next_token_logits.masked_fill(
             indices_to_remove, -float("Inf")
@@ -133,10 +150,34 @@ class ObserveModel:
             f"Échantillonnage Top-K (K={top_k}) -> Token tiré :"
             f" '{self.tokenizer.decode([sampled_top_k_id])}'"
         )
+        return filtered_logits
+
+    def observe_temperature(self, next_token_logits: torch.Tensor, temperatures: list[float]|None|float= None) -> torch.Tensor | list[torch.Tensor] |None:
+        if temperatures is None:
+            temperatures = [0.2, 0.7, 2.0]
+
+        if type(temperatures) is float:
+            print(f"- Temperature of {temperatures}")
+            return next_token_logits / temperatures
+
+        scaled_logits_list = []
+        if type(temperatures) is list[float]:
+            for temp in temperatures:
+                scaled_logits = next_token_logits / temp
+                scaled_logits_list.append(scaled_logits)
+
+                probs_temp = torch.softmax(scaled_logits, dim=-1)
+                top_p, top_i = torch.topk(probs_temp, 3)
+                print(
+                    f"Température {temp} -> Top 1 proba: {top_p[0].item():.4f}"
+                    f" ('{self.tokenizer.decode([top_i[0]])}')"
+                )
+            return scaled_logits_list
+        return None
 
     def observe_top_p(
             self, next_token_logits: torch.Tensor, top_p: float = 0.90, max_tokens_to_show:int = 5
-    ) -> None:
+    ) -> torch.Tensor:
         """
         Analyse et applique l'échantillonnage Top-P (Nucleus Sampling).
         :param next_token_logits:
@@ -202,21 +243,77 @@ class ObserveModel:
             f" {len(next_token_logits)}"
         )
         print(f"Token tiré : '{self.tokenizer.decode([sampled_id])}'")
+        return filtered_logits
 
-    def run_pipeline(self, text: str) -> None:
+    def observe_random_token(
+            self, next_token_logits: torch.Tensor, num_samples: int = 1
+    ) -> str | list[str]:
+        """Tire un ou plusieurs tokens au hasard en respectant la distribution de probabilité (Softmax)
+
+        Issue des logits transmis.
+        :param next_token_logits: Logits (bruts ou filtrés par T/K/P)
+        :param num_samples: Nombre de tokens à tirer
+        :return: Le ou les tokens tirés sous forme de chaîne de caractères
+        """
+        # 1. Conversion des logits filtrés en probabilités
+        probs = torch.softmax(next_token_logits, dim=-1)
+
+        # 2. Tirage aléatoire pondéré selon les probabilités
+        sampled_indices = torch.multinomial(probs, num_samples=num_samples)
+
+        if num_samples == 1:
+            token_id = sampled_indices.item()
+            token_str = self.tokenizer.decode([token_id])
+            prob_val = probs[token_id].item()
+            print(
+                f"Tirage aléatoire (Sampling) -> Token tiré : '{token_str}' (ID:"
+                f" {token_id}) avec une probabilité de {prob_val:.4f}"
+            )
+            return token_str
+        else:
+            tokens_str = []
+            print(f"Tirage aléatoire de {num_samples} tokens :")
+            for i, idx_tensor in enumerate(sampled_indices):
+                idx = idx_tensor.item()
+                t_str = self.tokenizer.decode([idx])
+                tokens_str.append(t_str)
+                print(
+                    f"  Tirage {i + 1} : '{t_str}' (ID: {idx}) - Proba :"
+                    f" {probs[idx].item():.4f}"
+                )
+            return tokens_str
+
+    def observe_pipeline_selection(self, next_token_logits: torch.Tensor, temperature: float=0.9, top_k : int=50, top_p: float=0.9, use_argmax:bool = True) -> None:
+        print("-- Observation d'une pipeline complète --")
+
+        print("# étape 1")
+        next_token_logits_1 = self.observe_temperature(next_token_logits, temperature)
+
+        print("# étape 2")
+        next_token_logits_2 = self.observe_top_k(next_token_logits_1, top_k=top_k)
+
+        print("# étape 3")
+        next_token_logits_3 = self.observe_top_p(next_token_logits_2, top_p=top_p)
+
+        print("# étape 4")
+        next_token_logits_4 = self.observe_softmax(next_token_logits_3)
+
+        result = self.observe_argmax(next_token_logits_4) if use_argmax else self.observe_random_token(next_token_logits_4)
+
+        print(f"# Sélection finale : {result}")
+
+
+
+    def run_pipeline(self, text: str,temperature: float=0.9, top_k : int=50, top_p: float=0.9, use_argmax:bool = True) -> None:
         """
         Exécute l'ensemble des observations à la suite.
+        :param use_argmax:
+        :param top_p:
+        :param top_k:
+        :param temperature:
         :param text: Texte d'entrée
         :return: None
         """
         input_ids = self.observe_tokenization(text)
         next_token_logits = self.observe_logits(input_ids)
-        self.observe_softmax(next_token_logits)
-        self.observe_sampling_strategies(next_token_logits)
-        self.observe_top_p(next_token_logits)
-
-
-# Exemple d'utilisation :
-if __name__ == "__main__":
-    observer = ObserveModel()
-    observer.run_pipeline("La capitale de la France est")
+        self.observe_pipeline_selection(next_token_logits, temperature, top_k, top_p, use_argmax)

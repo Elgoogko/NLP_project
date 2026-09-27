@@ -1,5 +1,6 @@
 # Virtual environement from python / UV / pip
 .venv
+.env.local
 
 # VScode
 .code
