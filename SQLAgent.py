@@ -35,6 +35,8 @@ class SQLAgent:
         self.system_message = system_message
         self.max_history_turns = max_history_turns
 
+        self.use_cuda = torch.cuda.is_available()
+
         self.tokenizer = AutoTokenizer.from_pretrained(adapter_path)
 
         base_model = self._load_base_model()
@@ -48,11 +50,19 @@ class SQLAgent:
         Charge le modèle de base en bfloat16
         :return: Le modèle de base chargé
         """
-        return AutoModelForCausalLM.from_pretrained(
-            self.model_name,
-            device_map="auto",
-            dtype=torch.bfloat16,
-        )
+        try:
+            return AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                device_map="auto" if self.use_cuda else None,
+                dtype=torch.bfloat16,
+            )
+        except Exception as e:
+            print(f"bfloat16 non supporté sur ce matériel ({e}), repli sur float32.")
+            return AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                device_map="auto" if self.use_cuda else None,
+                dtype=torch.float32,
+            )
 
     def _build_messages(self, user_message: str) -> list[dict]:
         """
