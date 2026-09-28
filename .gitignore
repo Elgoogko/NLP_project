@@ -6,3 +6,6 @@
 
 # JetBrains
 .idea
+
+# Checkpoints du LoRA
+/qwen-sql-adapter/checkpoints/

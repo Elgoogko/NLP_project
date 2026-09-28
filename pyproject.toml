@@ -7,8 +7,11 @@ dependencies = [
     "bitsandbytes>=0.50.2",
     "datasets>=5.0.1",
     "huggingface>=0.0.1",
+    "matplotlib>=3.11.2",
     "numpy>=2.4.6",
     "peft>=0.21.0",
+    "scikit-learn>=1.9.1",
     "torch>=2.14.0",
     "transformers>=5.17.0",
+    "trl>=1.14.0",
 ]
