@@ -3,6 +3,7 @@
 
 # VScode
 .code
+.vscode
 
 # JetBrains
 .idea

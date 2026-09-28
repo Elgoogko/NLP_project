@@ -1787,13 +1787,13 @@ print(f"Nombre d'exemples d'entraînement : {len(train_data)}")
 print(f"Nombre d'exemples de validation : {len(val_data)}")
 print(f"Nombre d'exemples de test (à garder de côté) : {len(test_data)}")
 
-with open("train_dataset.json", "w", encoding="utf-8") as f:
+with open("datasets/train_dataset.json", "w", encoding="utf-8") as f:
     json.dump(train_data, f, ensure_ascii=False, indent=4)
 
-with open("val_dataset.json", "w", encoding="utf-8") as f:
+with open("datasets/val_dataset.json", "w", encoding="utf-8") as f:
     json.dump(val_data, f, ensure_ascii=False, indent=4)
 
-with open("test_dataset.json", "w", encoding="utf-8") as f:
+with open("datasets/test_dataset.json", "w", encoding="utf-8") as f:
     json.dump(test_data, f, ensure_ascii=False, indent=4)
 
 print("Jeux de données sauvegardés avec succès !")

@@ -3,7 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
-ADAPTER_PATH = "./qwen-sql-lora/best_adapter"
+ADAPTER_PATH = "../../qwen-sql-lora/best_adapter"
 
 # Charger le tokenizer 
 tokenizer = AutoTokenizer.from_pretrained(ADAPTER_PATH)
