@@ -26,8 +26,8 @@ model = AutoModelForCausalLM.from_pretrained(
 print("Modèle prêt à être utilisé !")
 
 
-# Paramètre pour limiter la mémoire du modèle (6 messages = les 3 derniers échanges complets : user + assistant)
-MAX_HISTORY_LENGTH = 6
+# Paramètre pour limiter la mémoire du modèle (8 messages = les 4 derniers échanges complets : user + assistant)
+MAX_HISTORY_LENGTH = 8
 # Liste globale pour conserver le contexte de la conversation en cours
 chat_history = []
 
