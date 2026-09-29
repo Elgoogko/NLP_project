@@ -43,6 +43,7 @@ class SQLAgent:
         self.model = PeftModel.from_pretrained(base_model, adapter_path)
         self.model.eval()
 
+        # historique du mode CLI
         self.history: list[tuple[str, str]] = []
 
     def _load_base_model(self):
@@ -64,32 +65,68 @@ class SQLAgent:
                 dtype=torch.float32,
             )
 
-    def _build_messages(self, user_message: str) -> list[dict]:
+    def _build_messages(self, user_message: str, external_history: list = None) -> list[dict]:
         """
-        Construit la liste de messages (system + historique tronqué + message courant)
-        au format attendu par apply_chat_template.
-        :param user_message: Le nouveau message de l'utilisateur
+        Construit la liste structurée des messages (le contexte complet) à envoyer au modèle.
+        Cette fonction est flexible : elle s'adapte automatiquement si l'historique provient 
+        de notre terminal (CLI) ou d'une interface web externe complexe comme Gradio.
+
+        :param user_message: Le nouveau message tapé par l'utilisateur.
         :type user_message: str
-        :return: La liste de messages formatée
+        :param external_history: Historique fourni par une interface graphique externe, le cas échéant.
+        :type external_history: list, optionnel
+        :return: Une liste de dictionnaires au format OpenAI [{"role": "...", "content": "..."}, ...]
         :rtype: list[dict]
         """
         messages = [{"role": "system", "content": self.system_message}]
-        for past_user, past_assistant in self.history[-self.max_history_turns:]:
-            messages.append({"role": "user", "content": past_user})
-            messages.append({"role": "assistant", "content": past_assistant})
-        messages.append({"role": "user", "content": user_message})
+        
+        user_msg_str = str(user_message)
+        
+        # Traitement de l'historique venant d'une interface externe (Gradio)
+        if external_history and len(external_history) > 0:            
+            limit = self.max_history_turns * 2
+            for msg in external_history[-limit:]:
+                role = msg.get("role", "user") if isinstance(msg, dict) else getattr(msg, "role", "user")
+                raw_content = msg.get("content", "") if isinstance(msg, dict) else getattr(msg, "content", "")
+                
+                # Extraction du texte (Gestion du format Multimodal Gradio)
+                content_str = ""
+                if isinstance(raw_content, list):
+                    for item in raw_content:
+                        if isinstance(item, dict) and "text" in item:
+                            content_str += item["text"] + "\n"
+                else:
+                    content_str = str(raw_content)
+                    
+                messages.append({"role": str(role), "content": content_str.strip()})
+
+        # 2. Traitement de l'historique du Terminal (CLI) si Gradio n'est pas utilisé
+        elif not external_history and self.history:
+            for past_user, past_assistant in self.history[-self.max_history_turns:]:
+                messages.append({"role": "user", "content": str(past_user)})
+                if past_assistant:
+                    messages.append({"role": "assistant", "content": str(past_assistant)})
+                    
+        # On ajoute le message actuel de l'utilisateur
+        messages.append({"role": "user", "content": user_msg_str})
+        print(messages)
+        
         return messages
 
-    def generate_response(self, user_message: str) -> str:
+    def generate_response(self, user_message: str, external_history: list = None) -> str:
         """
-        Génère une réponse à partir du message utilisateur et de l'historique
-        courant, puis met à jour l'historique avec ce nouvel échange.
-        :param user_message: Le message de l'utilisateur
+        Génère une réponse SQL à partir de la question de l'utilisateur et du contexte actif.
+        Gère la traduction du texte en tokens, l'inférence du modèle sans calcul de gradients, 
+        et le décodage du résultat final.
+
+        :param user_message: La question posée par l'utilisateur.
         :type user_message: str
-        :return: La réponse générée par le modèle
+        :param external_history: L'historique d'une interface externe, si applicable.
+        :type external_history: list, optionnel
+        :return: Le code SQL brut ou l'explication générée par le modèle.
         :rtype: str
         """
-        messages = self._build_messages(user_message)
+        messages = self._build_messages(user_message, external_history)
 
         inputs = self.tokenizer.apply_chat_template(
             messages,
@@ -111,7 +148,10 @@ class SQLAgent:
         input_length = inputs["input_ids"].shape[-1]
         response = self.tokenizer.decode(outputs[0][input_length:], skip_special_tokens=True)
 
-        self.history.append((user_message, response))
+        # On met à jour l'historique interne si en mode CLI
+        if external_history is None:
+            self.history.append((user_message, response))
+
         return response
 
     def reset_history(self) -> None:
@@ -151,7 +191,7 @@ class SQLAgent:
             print(f"Agent : {response}\n")
 
 
-# Exemple d'utilisation :
+# Exemple d'utilisation dans le terminal :
 if __name__ == "__main__":
     agent = SQLAgent()
     agent.run_cli()

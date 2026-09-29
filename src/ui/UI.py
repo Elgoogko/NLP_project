@@ -4,7 +4,9 @@ from src.LoRA_fine_tuner.SQLAgent import SQLAgent
 agent = SQLAgent()
 
 def predict(message, history):
-    return agent.generate_response(message)
+    print("historique gradio")
+    print(history)
+    return agent.generate_response(message, external_history=history)
 
 with gr.Blocks() as demo:
     gr.Markdown("# Hub Multi-modèle")

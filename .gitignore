@@ -10,3 +10,6 @@
 
 # Checkpoints du LoRA
 /qwen-sql-adapter/checkpoints/
+
+# Fichiers cache python
+__pycache__/
