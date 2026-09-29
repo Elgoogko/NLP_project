@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import gradio as gr
 from src.LoRA_fine_tuner.SQLAgent import SQLAgent
 
@@ -35,6 +37,9 @@ with gr.Blocks() as demo:
 
     info_btn.click(fn=lambda: toggle_description(True), outputs=[description_box])
     close_desc_btn.click(fn=lambda: toggle_description(False), outputs=[description_box])
+
+def launch_ui():
+    demo.launch()
 
 if __name__ == "__main__":
     demo.launch()

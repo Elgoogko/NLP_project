@@ -15,11 +15,14 @@ class ObserveModel:
         Initialise la classe avec le nom du modèle sur HuggingFace
         :param model_name: Nom complet du modèle sur HuggingFace
         :type model_name: str
+        :return: None
         """
         load_dotenv()
         token = os.getenv("HF_TOKEN")
         if token:
             login(token)
+        else:
+            print("Aucun token de connexion à HuggingFace n'a été fournit / trouvé. Le téléchargement d'un nouveau modèle peut être plus lent ou bloqué en raison des quotas.")
 
         self.model_name = model_name
 
@@ -27,8 +30,13 @@ class ObserveModel:
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
 
     def get_emb_token(self, text: str):
+        """
+        Renvoie l'embedding du premier token trouvé dans la chaine de caractères
+        :param text: chaine de caractère, token ou mot
+        :type text: str
+        :return: embending du premier token (taille variable selon le LLM chargé)
+        """
         # 1. Obtenir l'ID du token
-
         token_ids = self.tokenizer.encode(text, add_special_tokens=False)
         token_id = token_ids[0]  # On prend le premier token
 
@@ -41,6 +49,8 @@ class ObserveModel:
 
         print("Forme du vecteur :", token_embedding.shape)
         print("Vecteur :", token_embedding)
+
+
     def observe_tokenization(self, text: str) -> torch.Tensor:
         """
         Analyse la tokenisation du texte d'entrée.
@@ -132,11 +142,22 @@ class ObserveModel:
         self.observe_top_p(next_token_logits)
 
     def observe_argmax(self, next_token_logits : torch.Tensor) -> str:
+        """
+        Prend en entrée un logits et renvoi le token le plus probable (directement décodé)
+        :param next_token_logits: Probabilités des tokens
+        :return: token le plus probable
+        """
         argmax_id = torch.argmax(next_token_logits).item()
         print(f"Argmax -> '{self.tokenizer.decode([argmax_id])}'")
         return self.tokenizer.decode([argmax_id])
 
     def observe_top_k(self, next_token_logits: torch.Tensor, top_k : int = 10) -> torch.Tensor:
+        """
+        Permet d'appliqer et d'observer l'effet du top-k (sélection des k plus probables)
+        :param next_token_logits: Probabilités des prochains tokens
+        :param top_k: nombre de tokens à conserver
+        :return: nouvelles probabilités : tous les tokens en dehors du top k sont à -inf
+        """
         indices_to_remove = (
                 next_token_logits
                 < torch.topk(next_token_logits, top_k)[0][..., -1, None]
@@ -152,28 +173,40 @@ class ObserveModel:
         )
         return filtered_logits
 
-    def observe_temperature(self, next_token_logits: torch.Tensor, temperatures: list[float]|None|float= None) -> torch.Tensor | list[torch.Tensor] |None:
-        if temperatures is None:
-            temperatures = [0.2, 0.7, 2.0]
+    @staticmethod
+    def _apply_temperature(next_token_logits: torch.Tensor, temperature:float) -> torch.Tensor:
+        """
+        Applique la temperature aux probabilités du prochain token. C'est à dire : divise chaque probabilité par la température
+        :param next_token_logits: les probabilités du prochain token
+        :type next_token_logits: torch.Tensor
+        :param temperature: la température, c'est-à-dire la capacité à être créatif ou non
+        :type temperature: float
+        :return:
+        """
+        assert temperature > 0, "Le temperature ne peux pas être inférieur ou égale a 0"
+        return next_token_logits/temperature
 
+    def observe_temperature(self, next_token_logits: torch.Tensor, temperatures: list[float]|float= 1) -> torch.Tensor | list[torch.Tensor] :
+        """
+        Applique et montre l'effet de la tempéta
+        :param next_token_logits:
+        :param temperatures:
+        :return:
+        """
         if type(temperatures) is float:
             print(f"- Temperature of {temperatures}")
-            return next_token_logits / temperatures
-
-        scaled_logits_list = []
-        if type(temperatures) is list[float]:
-            for temp in temperatures:
-                scaled_logits = next_token_logits / temp
-                scaled_logits_list.append(scaled_logits)
-
+            return self._apply_temperature(next_token_logits, temperatures)
+        else:
+            scaled_logits_list : list[torch.Tensor] = [computed_temp_logits for computed_temp_logits in
+                                  map(self._apply_temperature, next_token_logits, temperatures)]
+            for i, scaled_logits in enumerate(scaled_logits_list):
                 probs_temp = torch.softmax(scaled_logits, dim=-1)
                 top_p, top_i = torch.topk(probs_temp, 3)
                 print(
-                    f"Température {temp} -> Top 1 proba: {top_p[0].item():.4f}"
+                    f"Température {temperatures[i]} -> Top 1 proba: {top_p[0].item():.4f}"
                     f" ('{self.tokenizer.decode([top_i[0]])}')"
                 )
             return scaled_logits_list
-        return None
 
     def observe_top_p(
             self, next_token_logits: torch.Tensor, top_p: float = 0.90, max_tokens_to_show:int = 5
@@ -182,11 +215,11 @@ class ObserveModel:
         Analyse et applique l'échantillonnage Top-P (Nucleus Sampling).
         :param next_token_logits:
         :type next_token_logits: Torch. Tensor
-        :param top_p:
+        :param top_p: probabilité totale à atteindre
         :type top_p: float
         :param max_tokens_to_show:
         :type max_tokens_to_show: int
-        :return:
+        :return: probabilités des tokens modifiés
         """
 
         # 1. Trier les logits par ordre décroissant
@@ -248,11 +281,13 @@ class ObserveModel:
     def observe_random_token(
             self, next_token_logits: torch.Tensor, num_samples: int = 1
     ) -> str | list[str]:
-        """Tire un ou plusieurs tokens au hasard en respectant la distribution de probabilité (Softmax)
-
+        """
+        Tire un ou plusieurs tokens au hasard en respectant la distribution de probabilité (Softmax)
         Issue des logits transmis.
         :param next_token_logits: Logits (bruts ou filtrés par T/K/P)
+        :type next_token_logits: torch.Tensor
         :param num_samples: Nombre de tokens à tirer
+        :type num_samples: int
         :return: Le ou les tokens tirés sous forme de chaîne de caractères
         """
         # 1. Conversion des logits filtrés en probabilités
@@ -283,7 +318,22 @@ class ObserveModel:
                 )
             return tokens_str
 
-    def observe_pipeline_selection(self, next_token_logits: torch.Tensor, temperature: float=0.9, top_k : int=50, top_p: float=0.9, use_argmax:bool = True) -> None:
+    def observe_pipeline_selection(self, next_token_logits: torch.Tensor, temperature: float=0.9, top_k : int=50, top_p: float=0.9, use_argmax:bool = True) -> str:
+        """
+        Montre le pipeline complet de sélection d'un LLM classique type Qwen2.5
+        :param next_token_logits: Les probabilités du prochain token
+        :type next_token_logits: torch.Tensor
+        :param temperature: Va plus ou moins lisée les probabilités et donc affecter la créativité
+        :type temperature: float
+        :param top_k: Combien de tokens garder dans les plus probables
+        :type top_k: int
+        :param top_p: La probabilité nécessaire à atteindre
+        :type top_p: float
+        :param use_argmax: Utilisé l'argmax pour la sélection final OU une sélection aléatoire
+        :type use_argmax: bool
+        :return: Prochain token
+        """
+
         print("-- Observation d'une pipeline complète --")
 
         print("# étape 1")
@@ -300,9 +350,9 @@ class ObserveModel:
 
         result = self.observe_argmax(next_token_logits_4) if use_argmax else self.observe_random_token(next_token_logits_4)
 
-        print(f"# Sélection finale : {result}")
+        print(f"# Sélection finale : {self.tokenizer.decode([result])}")
 
-
+        return self.tokenizer.decode([result])
 
     def run_pipeline(self, text: str,temperature: float=0.9, top_k : int=50, top_p: float=0.9, use_argmax:bool = True) -> None:
         """

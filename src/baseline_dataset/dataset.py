@@ -1,7 +1,26 @@
+"""
+Script de préparation et de division du jeu de données pour l'entraînement NLP.
+
+Ce fichier prend un jeu de données brut composé de dialogues (système, utilisateur, assistant)
+et le divise en trois sous-ensembles (Train, Validation, Test) pour évaluer un modèle.
+Il exporte ensuite ces sous-ensembles sous forme de fichiers JSON.
+"""
+
 import json
 from sklearn.model_selection import train_test_split
+import os
 
-sys_msg = "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
+sys_msg = (
+    "Tu es un assistant technique expert en MySQL, conçu pour aider les "
+    "débutants à écrire des requêtes SQL.\n"
+    "Règles strictes :\n"
+    "1. Réponds uniquement en français.\n"
+    "2. Si la demande concerne les bases de données ou MySQL, donne la requête "
+    "SQL dans un bloc de code.\n"
+    "3. Si la demande est hors sujet (ex: cuisine, poésie, code d'un autre "
+    "langage), refuse poliment et réoriente l'utilisateur vers MySQL.\n"
+    "4. Sois concis et précis."
+)
 
 raw_dataset = [
     {
@@ -1779,21 +1798,39 @@ raw_dataset = [
     }
 ]
 
+# Division initiale : 80% pour l'entraînement, 20% mis de côté temporairement
 train_data, temp_data = train_test_split(raw_dataset, test_size=0.2, random_state=42)
 
+# Division du reste (les 20%) en deux parts égales : 10% Validation, 10% Test
 val_data, test_data = train_test_split(temp_data, test_size=0.5, random_state=42)
 
+# Vérification en console de la bonne répartition des données
 print(f"Nombre d'exemples d'entraînement : {len(train_data)}")
 print(f"Nombre d'exemples de validation : {len(val_data)}")
 print(f"Nombre d'exemples de test (à garder de côté) : {len(test_data)}")
 
-with open("datasets/train_dataset.json", "w", encoding="utf-8") as f:
+# Définition du chemin de destination dynamique
+# 1. On récupère le dossier exact où se trouve dataset.py
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# 2. On cible le sous-dossier 'datasets'
+output_dir = os.path.join(current_dir, "datasets")
+
+# 3. On crée le dossier s'il n'existe pas pour éviter une erreur
+os.makedirs(output_dir, exist_ok=True)
+
+
+# 3. Exportation de l'ensemble d'entraînement au format JSON
+with open(os.path.join(output_dir, "train_dataset.json"), "w", encoding="utf-8") as f:
     json.dump(train_data, f, ensure_ascii=False, indent=4)
 
-with open("datasets/val_dataset.json", "w", encoding="utf-8") as f:
+# 4. Exportation de l'ensemble de validation au format JSON
+with open(os.path.join(output_dir, "val_dataset.json"), "w", encoding="utf-8") as f:
     json.dump(val_data, f, ensure_ascii=False, indent=4)
 
-with open("datasets/test_dataset.json", "w", encoding="utf-8") as f:
+# 5. Exportation de l'ensemble de test au format JSON
+with open(os.path.join(output_dir, "test_dataset.json"), "w", encoding="utf-8") as f:
     json.dump(test_data, f, ensure_ascii=False, indent=4)
 
-print("Jeux de données sauvegardés avec succès !")
+# Confirmation visuelle de la fin d'exécution du script
+print(f"Jeux de données sauvegardés avec succès dans : {output_dir}")

@@ -1,7 +1,7 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
-
+import os
 
 class SQLAgent:
     """
@@ -13,7 +13,7 @@ class SQLAgent:
     def __init__(
         self,
         model_name: str = "Qwen/Qwen2.5-1.5B-Instruct",
-        adapter_path: str = "./qwen-sql-lora/best_adapter",
+        adapter_path: str = "qwen-sql-lora",
         system_message: str = "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL.",
         max_history_turns: int = 4,
     ):
@@ -30,17 +30,21 @@ class SQLAgent:
             d'entraînement (max_length=512)
         :type max_history_turns: int
         """
+
+        self.adapter_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", adapter_path, "best_adapter"))
+        print(self.adapter_path)
+        assert os.path.exists(self.adapter_path), f"Path to adapter doesn't exists {self.adapter_path}"
+
         self.model_name = model_name
-        self.adapter_path = adapter_path
         self.system_message = system_message
         self.max_history_turns = max_history_turns
 
         self.use_cuda = torch.cuda.is_available()
 
-        self.tokenizer = AutoTokenizer.from_pretrained(adapter_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.adapter_path)
 
         base_model = self._load_base_model()
-        self.model = PeftModel.from_pretrained(base_model, adapter_path)
+        self.model = PeftModel.from_pretrained(base_model, self.adapter_path)
         self.model.eval()
 
         # historique du mode CLI
