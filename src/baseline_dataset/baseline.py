@@ -11,6 +11,7 @@ model = AutoModelForCausalLM.from_pretrained(
     torch_dtype=torch.bfloat16,
     device_map="auto"
 )
+
 print("Modèle prêt à être utilisé !")
 
 
@@ -44,7 +45,7 @@ selected_system_prompt = system_prompt_v2
 
 
 def ask_mysql_assistant(
-    user_input, model, tokenizer, system_prompt=selected_system_prompt
+    user_input, model = model, tokenizer = tokenizer, system_prompt=selected_system_prompt
 ):
   global chat_history
 
@@ -100,19 +101,7 @@ def reset_chat():
 
 
 
-# Test 1 : Demande valide (SELECT)
-print(
-    ask_mysql_assistant(
-        "Je veux la liste de tous les utilisateurs inscrits.", model, tokenizer
-    )
-)
 
-# Test 2 : Demande hors-sujet pour vérifier le refus
-print(
-    ask_mysql_assistant(
-        "Peux-tu me donner une recette de crêpes ?", model, tokenizer
-    )
-)
 
 # Test 3 : Réinitialisation si besoin
 # reset_chat()

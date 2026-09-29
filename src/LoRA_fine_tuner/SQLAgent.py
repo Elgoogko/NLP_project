@@ -155,7 +155,3 @@ class SQLAgent:
             print(f"Agent : {response}\n")
 
 
-# Exemple d'utilisation :
-if __name__ == "__main__":
-    agent = SQLAgent()
-    agent.run_cli()

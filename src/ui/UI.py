@@ -1,10 +1,12 @@
+from pathlib import Path
+
 import gradio as gr
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
 MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
-ADAPTER_PATH = "../../qwen-sql-lora/best_adapter"
+ADAPTER_PATH = str(Path(__file__).resolve().parents[2] / "qwen-sql-lora" / "best_adapter")
 
 # Charger le tokenizer 
 tokenizer = AutoTokenizer.from_pretrained(ADAPTER_PATH)
@@ -93,5 +95,5 @@ with gr.Blocks() as demo:
     info_btn.click(fn=lambda: toggle_description(True), outputs=[description_box])
     close_desc_btn.click(fn=lambda: toggle_description(False), outputs=[description_box])
 
-if __name__ == "__main__":
+def launch_ui():
     demo.launch()

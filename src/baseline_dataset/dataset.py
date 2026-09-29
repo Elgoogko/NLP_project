@@ -1,6 +1,6 @@
 import json
 from sklearn.model_selection import train_test_split
-
+import os
 sys_msg = "Tu es un assistant technique expert en MySQL, conçu pour aider les débutants à écrire des requêtes SQL."
 
 raw_dataset = [
@@ -1779,21 +1779,27 @@ raw_dataset = [
     }
 ]
 
-train_data, temp_data = train_test_split(raw_dataset, test_size=0.2, random_state=42)
+def create_dataset():
+    train_data, temp_data = train_test_split(raw_dataset, test_size=0.2, random_state=42)
 
-val_data, test_data = train_test_split(temp_data, test_size=0.5, random_state=42)
+    val_data, test_data = train_test_split(temp_data, test_size=0.5, random_state=42)
 
-print(f"Nombre d'exemples d'entraînement : {len(train_data)}")
-print(f"Nombre d'exemples de validation : {len(val_data)}")
-print(f"Nombre d'exemples de test (à garder de côté) : {len(test_data)}")
+    print(f"Nombre d'exemples d'entraînement : {len(train_data)}")
+    print(f"Nombre d'exemples de validation : {len(val_data)}")
+    print(f"Nombre d'exemples de test (à garder de côté) : {len(test_data)}")
 
-with open("datasets/train_dataset.json", "w", encoding="utf-8") as f:
-    json.dump(train_data, f, ensure_ascii=False, indent=4)
+    dataset_path = os.path.join(os.getcwd(), "dataset")
 
-with open("datasets/val_dataset.json", "w", encoding="utf-8") as f:
-    json.dump(val_data, f, ensure_ascii=False, indent=4)
+    if not os.path.exists(dataset_path):
+        os.makedirs(dataset_path)
 
-with open("datasets/test_dataset.json", "w", encoding="utf-8") as f:
-    json.dump(test_data, f, ensure_ascii=False, indent=4)
+    with open(os.path.join(dataset_path, "train_dataset.json"), "w", encoding="utf-8") as f:
+        json.dump(train_data, f, ensure_ascii=False, indent=4)
 
-print("Jeux de données sauvegardés avec succès !")
+    with open(os.path.join(dataset_path, "validation_dataset.json"), "w", encoding="utf-8") as f:
+        json.dump(val_data, f, ensure_ascii=False, indent=4)
+
+    with open(os.path.join(dataset_path, "test_dataset.json"), "w", encoding="utf-8") as f:
+        json.dump(test_data, f, ensure_ascii=False, indent=4)
+
+    print("Jeux de données sauvegardés avec succès !")
