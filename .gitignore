@@ -9,4 +9,8 @@
 .idea
 
 # Checkpoints du LoRA
-/qwen-sql-adapter/checkpoints/
+./qwen-sql-adapter/checkpoints/
+
+# python Cache
+src/ui/__pycache__
+src/LoRA_fine_tuner/__pycache__
