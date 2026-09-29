@@ -1,12 +1,8 @@
 import gradio as gr
 from src.LoRA_fine_tuner.SQLAgent import SQLAgent
 
+#initialisation de l'agent
 agent = SQLAgent()
-
-def predict(message, history):
-    print("historique gradio")
-    print(history)
-    return agent.generate_response(message, external_history=history)
 
 with gr.Blocks() as demo:
     gr.Markdown("# Hub Multi-modèle")
@@ -24,7 +20,7 @@ with gr.Blocks() as demo:
                 close_desc_btn = gr.Button("Fermer la description", size="sm")
             info_btn = gr.Button("Description du modèle", variant="secondary")
             gr.ChatInterface(
-                fn = predict,
+                fn = agent.generate_response,
                 save_history = True,
                 stop_btn = True,
             )
@@ -33,6 +29,7 @@ with gr.Blocks() as demo:
         with gr.Tab("Coming soon"):
             gr.Markdown( " **Coming soon** ")
 
+    #Fonction permettant l'affichage de la descrition
     def toggle_description(visible: bool):
         return gr.update(visible=visible)
 
