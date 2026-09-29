@@ -77,6 +77,24 @@ uv pin python <version>
 - Torch
 - Pandas
 - Numpy
+- Matplotlib
+- Trl
+- Scikit-learn
+
+## Générer l'adaptateur LoRA
+Ce dépôt contient de base l'adapteur situé dans `qwen-sql-lora/best_adapter`, sa génération peut être obtenue par:
+```
+uv run LoRAFineTunner.py
+```
+
+## Lancer l'application
+### Version graphique
+
+### Version CLI
+```py
+uv run SQLAgent.py
+```
+
 
 ## ✅ Les bonnes pratiques de code
 
