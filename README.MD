@@ -1,105 +1,120 @@
-# 🤖 NLP Project
+# NLP Project
+## Sommaire
+<img src="https://upload.wikimedia.org/wikipedia/commons/f/f8/CY_Tech.svg" align="right"
+     alt="Size Limit logo by Anton Lovchikov" width="170">
+* [Présentation](#présentation) : Présentation du projet
+* [Pré-requis](#pré-requis) : Installation de l'environnement et des dépendances
+* [Outils utilisés](#outils-utilisés) : Librairies et outils de développement
+* [Architecture du projet](#architecture-du-projet) : Structure des dossiers
+* [Fonctionnalités principales](#fonctionnalités-principales) : Liste des fonctionnalités et scripts
+* [Lancer l'application](#lancer-lapplication) : Instructions pour exécuter le projet en CLI ou UI
 
-## Descriptif
 
-- 📅 Date de rendu : 2026-09-30 (présentation)
+## Présentation
 
-## Environement
+**NLP Project** est un projet axé sur le Traitement du Langage Naturel (NLP) et le Fine-Tuning de LLMs.
 
-### Python et UV
-- 🐍 Python 3.11
-- 💻 UV : gestionnaire de dépendance (à la place de pip)
+Contributeurs :
+- Bari-Joris BOICOS
+- Baptiste LAMBERT
+- Jonathan NGO
+- Tom CONTI
 
-### Le gestionnaire de dépendances
-On utilise [UV](https://docs.astral.sh/uv/). C'est un équivalent de Pip écrit en Rust, c'est donc beaucoup plus rapide.
-De plus, UV propose une gestion automatique des dépendances et de leurs mises à jour mais aussi un outil de gestion environment python.
 
-#### Installation d'UV
+Ce projet permet de **configurer**, **entraîner** et **utiliser** un **adaptateur LoRA** pour spécialiser un modèle (notamment `Qwen2.5-1.5B-Instruct`) dans la **génération** et le **traitement** de **requêtes SQL**. Il dispose d'outils d'observation, de création de datasets, d'un agent conversationnel en ligne de commande et d'une interface graphique.
 
-> [!caution]
-> Ne confondez pas UV avec UVicorn ! 
-> - UV : gestionnaire de dépendance
-> - UVicorn : gestionnaire de serveur web utilisant UV  
-> Les deux peuvent être installés via pip, mais passez plutôt par les commandes officielles
+## Pré-requis
 
-Sur Windows :
-````shell
+Le projet requiert **Python 3.11** et utilise **UV** comme gestionnaire de dépendances et d'environnements (en remplacement de `pip`). [UV](https://docs.astral.sh/uv/) est un équivalent de Pip écrit en Rust, offrant des performances accrues et une gestion automatique des environnements virtuels.
+
+### Installation d'UV
+
+> [!CAUTION]
+> Ne confondez pas UV avec UVicorn !
+> * **UV** : gestionnaire de dépendance
+> * **UVicorn** : gestionnaire de serveur web utilisant UV
+> Bien que les deux puissent être installés via pip, privilégiez les commandes officielles ci-dessous.
+
+Sur **Windows** (PowerShell) :
+
+```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-````
+```
 
-Sur linux:
-````bash
+Sur **Linux** :
+
+```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-````
+```
 
-Tester l'installation : 
-````bash
+Tester l'installation :
+
+```bash
 uv --version
-````
+```
 
-#### Les commandes utiles
-
-Gestionnaire de dépendances :
-````bash
-# installer les dépendances et créer le .venv (à exécuté en premier après avoir installer UV !)
+### Initialisation du projet
+Pour installer les dépendances et créer l'environnement virtuel (`.venv`), exécutez la commande suivante à la racine du projet :
+```bash
 uv sync
-
-# Ajouter une dépendance 
-uv add <nom_de_la_librairie>
-
-# Supprimer une dépendance 
-uv remove <nom_de_la_librairie>
-
-# Tout mettre à jour selon pyproject.toml
-uv lock --upgrade
-
-# Mettre à jour un package spécifique
-uv lock --upgrade-package <nom_de_la_librairie>
-````
-
-Gestionnaire python :
-````bash
-# Installer une / des versions de python
-uv python install <version>
-
-# Changer de version de python pour le projet
-uv pin python <version>
-````
-
-> [!warning]
-> Les commandes UV ne changent pas la version de python du système, mais seulement celle du projet courant
-> Ainsi, le compilateur et l'interpréteur python utilisés sont ceux du projet courant et non ceux du système.
->
-> Ne changez pas la version de python du système sans prévenir !
-
-### 📚 Librairies
-
-- Torch
-- Pandas
-- Numpy
-- Matplotlib
-- Trl
-- Scikit-learn
-
-## Générer l'adaptateur LoRA
-Ce dépôt contient de base l'adapteur situé dans `qwen-sql-lora/best_adapter`, sa génération peut être obtenue par:
 ```
-uv run LoRAFineTunner.py
+
+*(Commandes utiles supplémentaires : `uv add <lib>` pour ajouter, `uv remove <lib>` pour supprimer, `uv lock --upgrade` pour tout mettre à jour).*
+
+## Outils utilisés
+
+* **Python 3.11** - Langage de programmation
+* **UV** - Gestionnaire de paquets et d'environnements
+* **Torch** - Framework de Deep Learning
+* **Pandas / Numpy** - Manipulation et analyse de données
+* **Matplotlib** - Visualisation et tracés (ex: courbes de perte)
+* **Trl / Scikit-learn** - Machine Learning et Fine-tuning (Reinforcement Learning)
+
+## Architecture du projet
+
+D'après l'arborescence, le code source est organisé ainsi :
+
+```text
+NLP_project/
+├── qwen-sql-lora/          # Dossier contenant l'adaptateur pré-entraîné (best_adapter)
+├── src/
+│   ├── baseline_dataset/   # Datasets JSON (train/test/val) et scripts de base
+│   ├── LoRA_fine_tuner/    # Scripts pour l'entraînement (LoRAFineTunner.py) et l'Agent SQL
+│   ├── model_observation/  # Notebooks et démos (BPE, rapports d'observation)
+│   └── ui/                 # Fichiers de l'interface graphique (UI.py)
+├── agent.ipynb             # Notebook interactif pour l'Agent
+├── pyproject.toml / uv.lock# Configuration et verrouillage des dépendances UV
+└── README.md
 ```
+
+## Fonctionnalités principales
+
+### Génération de l'adaptateur LoRA
+Le dépôt contient un adaptateur pré-entraîné situé dans `qwen-sql-lora/best_adapter`. La logique d'entraînement, le calcul des courbes de perte (loss curves) et la génération du modèle sont gérés de manière modulaire.
+
+### Agent SQL intelligent
+L'application propose un Agent interactif capable de comprendre et traiter des requêtes SQL en s'appuyant sur le modèle Fine-Tuné.
+
+### Observation et Datasets
+Plusieurs outils sont intégrés pour comprendre le modèle (comme l'encodage par paires d'octets - BPE) et gérer les jeux de données (création de *baselines*, séparation train/val/test).
 
 ## Lancer l'application
-### Version graphique
+*Toutes les commandes d'exécution doivent utiliser `uv run` pour bénéficier de l'environnement virtuel.*
 
-### Version CLI
-```py
-uv run SQLAgent.py
+Vous pouvez directement lancer l'application depuis `agent.ipynb`
+
+Le lancement peut être également être effectué directement en ligne de commandes via les méthodes ci-dessous : 
+
+### Version graphique
+Pour lancer l'**interface graphique** :
+```bash
+uv run python -m src.ui.UI
 ```
 
+### Version terminale (CLI)
 
-## ✅ Les bonnes pratiques de code
+Pour lancer l'**Agent SQL en ligne de commande** :
 
-1. Respecter le plus que possible les conventions PEP 8 (Il y à des extensions VScode / JetBrains qui permettent de respecter automatiquement les conventions)
-2. écrivez des commentaires clairs et précis ainsi que des Docstrings détaillés pour les classes et méthodes
-3. Organisez le code par packages (en dossiers, comme sur Java. Attention : les imports ne sont qu'ascendants)
-4. Faites des classes Python avec les Dunders methods importantes (\__str\__; \__repr\__)
-4. Faites vos propres branches, ne jamais push sur "master" si ça ne marche pas chez vous !
+```bash
+uv run src/LoRA_fine_tuner/SQLAgent.py
+```
