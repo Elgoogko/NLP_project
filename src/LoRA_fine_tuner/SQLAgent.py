@@ -2,6 +2,10 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+from src.hf_manager_lora.hf_login import setup_hf_login
 
 class SQLAgent:
     """
@@ -30,6 +34,7 @@ class SQLAgent:
             d'entraînement (max_length=512)
         :type max_history_turns: int
         """
+        setup_hf_login()
 
         self.adapter_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", adapter_path, "best_adapter"))
         print(self.adapter_path)

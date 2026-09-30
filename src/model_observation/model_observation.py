@@ -4,6 +4,10 @@ import torch
 from dotenv import load_dotenv
 from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
+from src.hf_manager_lora.hf_login import setup_hf_login
 
 class ObserveModel:
     """
@@ -17,12 +21,7 @@ class ObserveModel:
         :type model_name: str
         :return: None
         """
-        load_dotenv()
-        token = os.getenv("HF_TOKEN")
-        if token:
-            login(token)
-        else:
-            print("Aucun token de connexion à HuggingFace n'a été fournit / trouvé. Le téléchargement d'un nouveau modèle peut être plus lent ou bloqué en raison des quotas.")
+        setup_hf_login()
 
         self.model_name = model_name
 

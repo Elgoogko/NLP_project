@@ -1,18 +1,14 @@
 import torch
-from huggingface_hub import login
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import os
-from dotenv import load_dotenv
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
+from src.hf_manager_lora.hf_login import setup_hf_login
+
+setup_hf_login()
 MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
 
-load_dotenv()
-token = os.getenv("HF_TOKEN")
-if token:
-    login(token)
-else:
-    print(
-        "Aucun token de connexion à HuggingFace n'a été fournit / trouvé. Le téléchargement d'un nouveau modèle peut être plus lent ou bloqué en raison des quotas.")
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 if tokenizer.pad_token is None:
