@@ -114,7 +114,7 @@ class ObserveModel:
     def observe_sampling_strategies(
         self,
         next_token_logits: torch.Tensor,
-            temperatures: list[float|int]|None=None,
+            temperatures: list[float|int]= [0.2,0.7,2.0],
         top_k: int = 10,
     ) -> None:
         """

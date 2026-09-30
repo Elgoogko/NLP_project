@@ -93,7 +93,7 @@ def create_lora(adapter_name: str):
 
     training_args = SFTConfig(
         output_dir=os.path.join(path_to_adapter, "checkpoints"),
-        num_train_epochs=6,  # lit 6 fois le jeu de données
+        num_train_epochs=8,  # lit 6 fois le jeu de données
         per_device_train_batch_size=4,
         per_device_eval_batch_size=4,
         gradient_accumulation_steps=4,  # batch effectif = 16
